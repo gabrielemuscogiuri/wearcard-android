@@ -11,6 +11,9 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <meta-data android:name="com.google.android.gms.nearby.connection.SERVICE_ID" android:value="@string/service_id" />
+        <meta-data
+            android:name="com.google.android.nearby.messages.API_KEY"
+            android:value="AIzaSyCeR8hZjH8c6Ea3jL8O0TC7vTkq8MVvMEE" />
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name" >
