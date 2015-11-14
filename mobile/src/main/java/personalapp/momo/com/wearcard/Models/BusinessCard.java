@@ -2,6 +2,8 @@ package personalapp.momo.com.wearcard.Models;
 
 import android.graphics.Bitmap;
 
+import java.io.Serializable;
+
 /**
  * Created by YassIne on 14/11/2015.
  */
@@ -9,7 +11,7 @@ import android.graphics.Bitmap;
 /*
 * Questa classe rappresenta il business card
 * */
-public class BusinessCard {
+public class BusinessCard implements Serializable {
     private String mNome;
     private String mCognome;
     private String mEmail;

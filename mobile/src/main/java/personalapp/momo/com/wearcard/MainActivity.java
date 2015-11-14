@@ -5,12 +5,28 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import java.util.ArrayList;
+
+import personalapp.momo.com.wearcard.Adapter.BusinessListAdapter;
+import personalapp.momo.com.wearcard.Models.BusinessCard;
+
 public class MainActivity extends Activity {
+
+    BusinessListAdapter mBCardListAdapter;
+    ArrayList<BusinessCard> mBCardList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mBCardList = new ArrayList<>();
+        //--------------------------------
+        // Business Card list adapter
+        //--------------------------------
+        mBCardListAdapter = new BusinessListAdapter(this,mBCardList);
+
+
     }
 
     @Override
