@@ -33,6 +33,8 @@ public class NearbyConn implements GoogleApiClient.ConnectionCallbacks, GoogleAp
     private static final long CONNECTION_TIME_OUT = 10000L;
     private static final int REQUEST_RESOLVE_ERROR = 11011;
 
+    private Message cardToSend;
+
     private static int[] NETWORK_TYPES = {ConnectivityManager.TYPE_WIFI, ConnectivityManager.TYPE_BLUETOOTH, ConnectivityManager.TYPE_ETHERNET};
 
     private boolean mIsHost;
@@ -40,10 +42,13 @@ public class NearbyConn implements GoogleApiClient.ConnectionCallbacks, GoogleAp
 
     private boolean mRisolving;
 
-    public NearbyConn(Context context, Activity activity){
+    public NearbyConn(Context context, Activity activity) {
         mActivity = activity;
         mContext = context;
         mRisolving = false;
+
+
+
 
         mGoogleApiClient = new GoogleApiClient.Builder(context)
                 .addConnectionCallbacks(this)
@@ -52,13 +57,19 @@ public class NearbyConn implements GoogleApiClient.ConnectionCallbacks, GoogleAp
                 .build();
     }
 
+    private byte[] serializeCard(BusinessCard bcard) throws IOException {
+        return Serializer.serialize(bcard);
+    }
+
+
     public void publish(BusinessCard bcard) throws IOException {
+
         if(!mGoogleApiClient.isConnected()){
             if(!mGoogleApiClient.isConnecting())
                 mGoogleApiClient.connect();
         }
-        byte[] businessCardByte = Serializer.serialize(bcard);
-        Message cardToSend = new Message(businessCardByte);
+        byte[] businessCardByte = serializeCard(bcard);
+        cardToSend = new Message(businessCardByte);
         Nearby.Messages.publish(mGoogleApiClient, cardToSend).setResultCallback(new ResultCallback<Status>() {
             @Override
             public void onResult(Status status) {
@@ -66,13 +77,13 @@ public class NearbyConn implements GoogleApiClient.ConnectionCallbacks, GoogleAp
                     System.out.println("success");
                 }
                 else{
-                    handleUnsuccefulResult(status);
+                    handleUnsuccessfulResult(status);
                 }
             }
         });
     }
 
-    private void handleUnsuccefulResult(Status status) {
+    private void handleUnsuccessfulResult(Status status) {
         if(status.getStatusCode() == NearbyMessagesStatusCodes.APP_NOT_OPTED_IN){
             if(!mRisolving){
                 try{
@@ -115,6 +126,32 @@ public class NearbyConn implements GoogleApiClient.ConnectionCallbacks, GoogleAp
             }
         }
         return false;
+    }
+
+    private void unpublish() {
+        System.out.println(TAG + " trying to unpublish");
+        // Cannot proceed without a connected GoogleApiClient. Reconnect and execute the pending
+        // task in onConnected().
+        if (!mGoogleApiClient.isConnected()) {
+            if (!mGoogleApiClient.isConnecting()) {
+                mGoogleApiClient.connect();
+            }
+        } else {
+            Nearby.Messages.unpublish(mGoogleApiClient,cardToSend)
+                    .setResultCallback(new ResultCallback<Status>() {
+
+                        @Override
+                        public void onResult(Status status) {
+                            if (status.isSuccess()) {
+                               System.out.println(TAG + " unpublished successfully");
+
+                            } else {
+                                System.out.println(TAG + " could not unpublish");
+                                handleUnsuccessfulResult(status);
+                            }
+                        }
+                    });
+        }
     }
 
     public boolean sendCard(BusinessCard cardTosend){
