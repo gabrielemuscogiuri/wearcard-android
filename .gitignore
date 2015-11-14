@@ -5,3 +5,5 @@
 .DS_Store
 /build
 /captures
+android.jks
+mobile/mobile-debug.apk

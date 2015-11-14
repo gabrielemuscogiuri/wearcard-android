@@ -29,7 +29,7 @@ import personalapp.momo.com.wearcard.Models.BusinessCard;
 
 public class MainActivity extends Activity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
-    private static final String TAG = NearbyConn.class.getName();
+    private static final String TAG = MainActivity.class.getName();
     private Context mContext;
     private Activity mActivity;
     private GoogleApiClient mGoogleApiClient;
@@ -62,10 +62,10 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
             @Override
             public void onClick(View v) {
 
-                    publish("prova a publicare");
+                publish("prova a publicare");
             }
         });
-
+        
         mBCardList = new ArrayList<>();
         //--------------------------------
         // Business Card list adapter
@@ -83,12 +83,6 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
                 .addOnConnectionFailedListener(this)
                 .addApi(Nearby.MESSAGES_API)
                 .build();
-
-
-        //publish("prova test");
-
-        subscribe();
-
 
     }
 
@@ -129,7 +123,8 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
 
     @Override
     public void onConnected(Bundle bundle) {
-
+        System.out.println("onConnected --> Connected");
+        subscribe();
     }
 
     @Override
@@ -251,8 +246,7 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
             if (!mGoogleApiClient.isConnecting()) {
                 mGoogleApiClient.connect();
             }
-        } else {;
-
+        } else {
             Nearby.Messages.subscribe(mGoogleApiClient, mMessageListener)
                     .setResultCallback(new ResultCallback<Status>() {
 
