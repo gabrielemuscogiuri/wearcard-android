@@ -1,11 +1,12 @@
 package personalapp.momo.com.wearcard;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.IntentSender;
 import android.net.ConnectivityManager;
-import android.net.Network;
 import android.net.NetworkInfo;
 import android.os.Bundle;
-import android.provider.SyncStateContract;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -17,8 +18,6 @@ import com.google.android.gms.nearby.messages.Message;
 import com.google.android.gms.nearby.messages.NearbyMessagesStatusCodes;
 
 import java.io.IOException;
-import java.io.Serializable;
-import java.sql.Connection;
 
 import personalapp.momo.com.wearcard.Models.BusinessCard;
 
@@ -29,8 +28,10 @@ public class NearbyConn implements GoogleApiClient.ConnectionCallbacks, GoogleAp
 
     private static final String TAG = NearbyConn.class.getName();
     private Context mContext;
+    private Activity mActivity;
     private GoogleApiClient mGoogleApiClient;
     private static final long CONNECTION_TIME_OUT = 10000L;
+    private static final int REQUEST_RESOLVE_ERROR = 11011;
 
     private static int[] NETWORK_TYPES = {ConnectivityManager.TYPE_WIFI, ConnectivityManager.TYPE_BLUETOOTH, ConnectivityManager.TYPE_ETHERNET};
 
@@ -39,7 +40,8 @@ public class NearbyConn implements GoogleApiClient.ConnectionCallbacks, GoogleAp
 
     private boolean mRisolving;
 
-    public NearbyConn(Context context){
+    public NearbyConn(Context context, Activity activity){
+        mActivity = activity;
         mContext = context;
         mRisolving = false;
 
@@ -75,8 +77,20 @@ public class NearbyConn implements GoogleApiClient.ConnectionCallbacks, GoogleAp
             if(!mRisolving){
                 try{
                     mRisolving = true;
-                    status.startResolutionForResult(getmContext(), );
+                    status.startResolutionForResult(getActivity(),REQUEST_RESOLVE_ERROR);
+                }catch(IntentSender.SendIntentException e){
+                    e.printStackTrace();
                 }
+            }
+        }else {
+            if (status.getStatusCode() == ConnectionResult.NETWORK_ERROR) {
+                Toast.makeText(getActivity().getApplicationContext(),
+                        "No connectivity, cannot proceed. Fix in 'Settings' and try again.",
+                        Toast.LENGTH_LONG).show();
+            } else {
+                // To keep things simple, pop a toast for all other error messages.
+                Toast.makeText(getActivity().getApplicationContext(), "Unsuccessful: " +
+                        status.getStatusMessage(), Toast.LENGTH_LONG).show();
             }
         }
 
@@ -149,7 +163,7 @@ public class NearbyConn implements GoogleApiClient.ConnectionCallbacks, GoogleAp
 
     }
 
-    public Context getmContext() {
+    public Context getContext() {
         return mContext;
     }
 
@@ -179,5 +193,13 @@ public class NearbyConn implements GoogleApiClient.ConnectionCallbacks, GoogleAp
 
     public void setConnected(boolean mIsConnected) {
         this.mIsConnected = mIsConnected;
+    }
+
+    public Activity getActivity() {
+        return mActivity;
+    }
+
+    public void setActivity(Activity mActivity) {
+        this.mActivity = mActivity;
     }
 }
