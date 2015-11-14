@@ -8,6 +8,8 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -34,6 +36,8 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
     private static final long CONNECTION_TIME_OUT = 10000L;
     private static final int REQUEST_RESOLVE_ERROR = 11011;
 
+    Button mPush;
+
     private Message cardToSend;
 
     private static int[] NETWORK_TYPES = {ConnectivityManager.TYPE_WIFI, ConnectivityManager.TYPE_BLUETOOTH, ConnectivityManager.TYPE_ETHERNET};
@@ -51,6 +55,16 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mPush = (Button) findViewById(R.id.button_publish);
+
+        mPush.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                    publish("prova a publicare");
+            }
+        });
 
         mBCardList = new ArrayList<>();
         //--------------------------------
@@ -70,11 +84,9 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
                 .addApi(Nearby.MESSAGES_API)
                 .build();
 
-        try {
-            publish("prova test");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+
+        //publish("prova test");
+
         subscribe();
 
 
@@ -135,7 +147,7 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
     }
 
 
-    public void publish(String message) throws IOException {
+    public void publish(String message) {
 
         if(!mGoogleApiClient.isConnected()){
             if(!mGoogleApiClient.isConnecting())
@@ -144,16 +156,20 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
         //byte[] businessCardByte = serializeCard(bcard);
         byte[] businessCardByte = message.getBytes();
         cardToSend = new Message(businessCardByte);
-        Nearby.Messages.publish(mGoogleApiClient, cardToSend).setResultCallback(new ResultCallback<Status>() {
-            @Override
-            public void onResult(Status status) {
-                if (status.isSuccess()) {
-                    System.out.println("success");
-                } else {
-                    handleUnsuccessfulResult(status);
+        if(mGoogleApiClient.isConnected()){
+            System.out.println("google api is connected");
+            Nearby.Messages.publish(mGoogleApiClient, cardToSend).setResultCallback(new ResultCallback<Status>() {
+                @Override
+                public void onResult(Status status) {
+                    if (status.isSuccess()) {
+                        System.out.println("success");
+                    } else {
+                        System.out.println("tipo di errore trovato ----------->" + status.toString());
+                        handleUnsuccessfulResult(status);
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     private void handleUnsuccessfulResult(Status status) {
@@ -210,7 +226,7 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
                 mGoogleApiClient.connect();
             }
         } else {
-            Nearby.Messages.unpublish(mGoogleApiClient,cardToSend)
+            Nearby.Messages.unpublish(mGoogleApiClient, cardToSend)
                     .setResultCallback(new ResultCallback<Status>() {
 
                         @Override
@@ -290,13 +306,13 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    try {
-                        deserializeMessage(message);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    } catch (ClassNotFoundException e) {
-                        e.printStackTrace();
-                    }
+                    //try {
+                        decriptMessage(message);
+                    //} catch (IOException e) {
+                      //  e.printStackTrace();
+                   // } catch (ClassNotFoundException e) {
+                   //     e.printStackTrace();
+                   // }
                 }
             });
 
@@ -307,6 +323,11 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
             super.onLost(message);
         }
     };
+
+    private void decriptMessage(Message message) {
+        String decriptedMex = message.toString();
+        System.out.println(decriptedMex);
+    }
 
     public void deserializeMessage(Message message) throws IOException, ClassNotFoundException {
         BusinessCard mFoundCard = (BusinessCard) Serializer.deserialize(message.getContent());
