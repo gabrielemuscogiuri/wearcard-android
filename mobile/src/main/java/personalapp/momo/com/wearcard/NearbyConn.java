@@ -16,6 +16,8 @@ import com.google.android.gms.nearby.Nearby;
 import com.google.android.gms.nearby.connection.Connections;
 import com.google.android.gms.nearby.messages.Message;
 import com.google.android.gms.nearby.messages.NearbyMessagesStatusCodes;
+import com.google.android.gms.nearby.messages.MessageListener;
+
 
 import java.io.IOException;
 
@@ -143,7 +145,7 @@ public class NearbyConn implements GoogleApiClient.ConnectionCallbacks, GoogleAp
                         @Override
                         public void onResult(Status status) {
                             if (status.isSuccess()) {
-                               System.out.println(TAG + " unpublished successfully");
+                                System.out.println(TAG + " unpublished successfully");
 
                             } else {
                                 System.out.println(TAG + " could not unpublish");
@@ -238,5 +240,87 @@ public class NearbyConn implements GoogleApiClient.ConnectionCallbacks, GoogleAp
 
     public void setActivity(Activity mActivity) {
         this.mActivity = mActivity;
+    }
+
+
+
+    private void subscribe() {
+        Log.i(TAG, "trying to subscribe");
+        // Cannot proceed without a connected GoogleApiClient. Reconnect and execute the pending
+        // task in onConnected().
+        if (!mGoogleApiClient.isConnected()) {
+            if (!mGoogleApiClient.isConnecting()) {
+                mGoogleApiClient.connect();
+            }
+        } else {
+            clearDeviceList();
+            SubscribeOptions options = new SubscribeOptions.Builder()
+                    .setStrategy(PUB_SUB_STRATEGY)
+                    .setCallback(new SubscribeCallback() {
+                        @Override
+                        public void onExpired() {
+                            super.onExpired();
+                            Log.i(TAG, "no longer subscribing");
+                            updateSharedPreference(Constants.KEY_SUBSCRIPTION_TASK,
+                                    Constants.TASK_NONE);
+                        }
+                    }).build();
+
+            Nearby.Messages.subscribe(mGoogleApiClient, mMessageListener, options)
+                    .setResultCallback(new ResultCallback<Status>() {
+
+                        @Override
+                        public void onResult(Status status) {
+                            if (status.isSuccess()) {
+                                Log.i(TAG, "subscribed successfully");
+                            } else {
+                                Log.i(TAG, "could not subscribe");
+                                handleUnsuccessfulNearbyResult(status);
+                            }
+                        }
+                    });
+        }
+    }
+
+    /**
+     * Ends the subscription to messages from nearby devices. If successful, resets state. If not
+     * successful, attempts to resolve any error related to Nearby permissions by
+     * displaying an opt-in dialog.
+     */
+    private void unsubscribe() {
+        System.out.println(TAG + " trying to unsubscribe");
+        // Cannot proceed without a connected GoogleApiClient. Reconnect and execute the pending
+        // task in onConnected().
+        if (!mGoogleApiClient.isConnected()) {
+            if (!mGoogleApiClient.isConnecting()) {
+                mGoogleApiClient.connect();
+            }
+        } else {
+            Nearby.Messages.unsubscribe(mGoogleApiClient, mMessageListener)
+                    .setResultCallback(new ResultCallback<Status>() {
+
+                        @Override
+                        public void onResult(Status status) {
+                            if (status.isSuccess()) {
+                                System.out.println(TAG + " unsubscribed successfully");
+
+                            } else {
+                                System.out.println(TAG + " could not unsubscribe");
+                                handleUnsuccessfulResult(status);
+                            }
+                        }
+                    });
+        }
+    }
+
+    MessageListener mMessageListener = new MessageListener() {
+        @Override
+        public void onFound(Message message) {
+            deserializeMessage(message);
+        }
+    };
+
+    public void deserializeMessage(Message message){
+        Serializer.deserialize();
     }
 }
