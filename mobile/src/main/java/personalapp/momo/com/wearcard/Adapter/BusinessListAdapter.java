@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -33,29 +34,27 @@ public class BusinessListAdapter extends ArrayAdapter<BusinessCard> {
         if (v == null) {
             LayoutInflater vi;
             vi = LayoutInflater.from(getContext());
-            //v = vi.inflate(R.layout.itemlistrow, null);
+            v = vi.inflate(R.layout.card_item, null);
         }
 
         BusinessCard card = getItem(position);
 
         if (card != null) {
-            /*
-            TextView tt1 = (TextView) v.findViewById(R.id.id);
-            TextView tt2 = (TextView) v.findViewById(R.id.categoryId);
-            TextView tt3 = (TextView) v.findViewById(R.id.description);
+            TextView cardNome = (TextView) v.findViewById(R.id.card_tv_nome);
+            TextView cardCognome = (TextView) v.findViewById(R.id.card_tv_cognome);
+            ImageView thumbnail = (ImageView) v.findViewById(R.id.card_tv_thumbnail);
 
-            if (tt1 != null) {
-                tt1.setText(card.getId());
+            if (cardNome != null) {
+                cardNome.setText(card.getNome());
             }
 
-            if (tt2 != null) {
-                tt2.setText(card.getCategory().getId());
+            if (cardCognome != null) {
+                cardCognome.setText(card.getCognome());
             }
 
-            if (tt3 != null) {
-                tt3.setText(card.getDescription());
+            if (thumbnail != null) {
+                thumbnail.setImageBitmap(card.getThumbnail());
             }
-            */
         }
         return v;
     }

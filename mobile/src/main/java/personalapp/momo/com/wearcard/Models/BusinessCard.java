@@ -1,5 +1,7 @@
 package personalapp.momo.com.wearcard.Models;
 
+import android.graphics.Bitmap;
+
 /**
  * Created by YassIne on 14/11/2015.
  */
@@ -8,22 +10,24 @@ package personalapp.momo.com.wearcard.Models;
 * Questa classe rappresenta il business card
 * */
 public class BusinessCard {
-    private String mName;
+    private String mNome;
     private String mCognome;
     private String mEmail;
     private String mNumero;
+    private Bitmap mThumbnail;
+    private String mOccupazione;
 
 
     public BusinessCard(){
 
     }
 
-    public String getName() {
-        return mName;
+    public String getNome() {
+        return mNome;
     }
 
-    public void setName(String mName) {
-        this.mName = mName;
+    public void setNome(String mName) {
+        this.mNome = mName;
     }
 
     public String getCognome() {
@@ -48,5 +52,21 @@ public class BusinessCard {
 
     public void setmNumero(String mNumero) {
         this.mNumero = mNumero;
+    }
+
+    public Bitmap getThumbnail() {
+        return mThumbnail;
+    }
+
+    public void setThumbnail(Bitmap mThumbnail) {
+        this.mThumbnail = mThumbnail;
+    }
+
+    public String getmOccupazione() {
+        return mOccupazione;
+    }
+
+    public void setmOccupazione(String mOccupazione) {
+        this.mOccupazione = mOccupazione;
     }
 }
