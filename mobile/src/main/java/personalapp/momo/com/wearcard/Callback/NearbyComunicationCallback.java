@@ -9,7 +9,7 @@ import com.google.android.gms.common.api.Status;
 public class NearbyComunicationCallback implements ResultCallback<Status> {
     private static final String TAG = NearbyComunicationCallback.class.getName();
     private final String method;
-    private final Runnable ruOnSuccess;
+    private final Runnable runOnSuccess;
 
     public NearbyComunicationCallback(String method){
         this(method, null);
@@ -17,15 +17,20 @@ public class NearbyComunicationCallback implements ResultCallback<Status> {
 
     public NearbyComunicationCallback(String method, Runnable run){
         this.method = method;
-        this.ruOnSuccess = run;
+        this.runOnSuccess = run;
 
     }
 
     @Override
     public void onResult(Status status) {
         if(status.isSuccess()){
-            Log.i(TAG, method + " success.");
-            if()
+            if(runOnSuccess != null){
+                runOnSuccess.run();
+            }
+        }else{
+            if(status.hasResolution()){
+                if(!mResolvingError)
+            }
         }
 
     }

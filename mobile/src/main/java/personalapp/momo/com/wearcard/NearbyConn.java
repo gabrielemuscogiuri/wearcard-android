@@ -39,14 +39,18 @@ public class NearbyConn implements GoogleApiClient.ConnectionCallbacks, GoogleAp
         mGoogleApiClient = new GoogleApiClient.Builder(context)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
-                .addApi(Nearby.CONNECTIONS_API)
+                .addApi(Nearby.MESSAGES_API)
                 .build();
     }
 
-    public void publishMessage(BusinessCard bcard) throws IOException {
+    public void publish(BusinessCard bcard) throws IOException {
+        if(!mGoogleApiClient.isConnected()){
+            if(!mGoogleApiClient.isConnecting())
+                mGoogleApiClient.connect();
+        }
         byte[] businessCardByte = Serializer.serialize(bcard);
         Message cardToSend = new Message(businessCardByte);
-        Nearby.Messages.publish(mGoogleApiClient, cardToSend).setResultCallback(new ErrorCheckingCallback());
+        Nearby.Messages.publish(mGoogleApiClient, cardToSend).setResultCallback(new );
     }
 
     public void connect(){
