@@ -2,6 +2,7 @@ package personalapp.momo.com.wearcard.Callback;
 
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
+import com.google.android.gms.nearby.messages.NearbyMessagesStatusCodes;
 
 /**
  * Created by YassIne on 14/11/2015.
@@ -29,8 +30,15 @@ public class NearbyComunicationCallback implements ResultCallback<Status> {
             }
         }else{
             if(status.hasResolution()){
-                if(!mResolvingError)
+                handleUnsuccessfullResult(status);
             }
+        }
+
+    }
+
+    private void handleUnsuccessfullResult(Status status){
+        if (status.getStatusCode() == NearbyMessagesStatusCodes.APP_NOT_OPTED_IN){
+            
         }
 
     }
