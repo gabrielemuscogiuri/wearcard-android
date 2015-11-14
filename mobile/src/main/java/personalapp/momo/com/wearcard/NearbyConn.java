@@ -5,12 +5,16 @@ import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.provider.SyncStateContract;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.nearby.Nearby;
 import com.google.android.gms.nearby.connection.Connections;
 import com.google.android.gms.nearby.messages.Message;
+import com.google.android.gms.nearby.messages.NearbyMessagesStatusCodes;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -23,6 +27,7 @@ import personalapp.momo.com.wearcard.Models.BusinessCard;
  */
 public class NearbyConn implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, Connections.ConnectionRequestListener, Connections.MessageListener, Connections.EndpointDiscoveryListener {
 
+    private static final String TAG = NearbyConn.class.getName();
     private Context mContext;
     private GoogleApiClient mGoogleApiClient;
     private static final long CONNECTION_TIME_OUT = 10000L;
@@ -32,9 +37,11 @@ public class NearbyConn implements GoogleApiClient.ConnectionCallbacks, GoogleAp
     private boolean mIsHost;
     private boolean mIsConnected;
 
+    private boolean mRisolving;
 
     public NearbyConn(Context context){
         mContext = context;
+        mRisolving = false;
 
         mGoogleApiClient = new GoogleApiClient.Builder(context)
                 .addConnectionCallbacks(this)
@@ -50,7 +57,29 @@ public class NearbyConn implements GoogleApiClient.ConnectionCallbacks, GoogleAp
         }
         byte[] businessCardByte = Serializer.serialize(bcard);
         Message cardToSend = new Message(businessCardByte);
-        Nearby.Messages.publish(mGoogleApiClient, cardToSend).setResultCallback(new );
+        Nearby.Messages.publish(mGoogleApiClient, cardToSend).setResultCallback(new ResultCallback<Status>() {
+            @Override
+            public void onResult(Status status) {
+                if(status.isSuccess()){
+                    System.out.println("success");
+                }
+                else{
+                    handleUnsuccefulResult(status);
+                }
+            }
+        });
+    }
+
+    private void handleUnsuccefulResult(Status status) {
+        if(status.getStatusCode() == NearbyMessagesStatusCodes.APP_NOT_OPTED_IN){
+            if(!mRisolving){
+                try{
+                    mRisolving = true;
+                    status.startResolutionForResult(getmContext(), );
+                }
+            }
+        }
+
     }
 
     public void connect(){

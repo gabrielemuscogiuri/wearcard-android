@@ -11,6 +11,7 @@ public class NearbyComunicationCallback implements ResultCallback<Status> {
     private static final String TAG = NearbyComunicationCallback.class.getName();
     private final String method;
     private final Runnable runOnSuccess;
+    private boolean mResolving;
 
     public NearbyComunicationCallback(String method){
         this(method, null);
@@ -38,7 +39,7 @@ public class NearbyComunicationCallback implements ResultCallback<Status> {
 
     private void handleUnsuccessfullResult(Status status){
         if (status.getStatusCode() == NearbyMessagesStatusCodes.APP_NOT_OPTED_IN){
-            
+
         }
 
     }
