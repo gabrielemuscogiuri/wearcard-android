@@ -242,7 +242,7 @@ public class NearbyConn implements GoogleApiClient.ConnectionCallbacks, GoogleAp
         this.mActivity = mActivity;
     }
 
-
+/*
 
     private void subscribe() {
         Log.i(TAG, "trying to subscribe");
@@ -281,7 +281,7 @@ public class NearbyConn implements GoogleApiClient.ConnectionCallbacks, GoogleAp
                     });
         }
     }
-
+*/
     /**
      * Ends the subscription to messages from nearby devices. If successful, resets state. If not
      * successful, attempts to resolve any error related to Nearby permissions by
@@ -315,12 +315,29 @@ public class NearbyConn implements GoogleApiClient.ConnectionCallbacks, GoogleAp
 
     MessageListener mMessageListener = new MessageListener() {
         @Override
-        public void onFound(Message message) {
-            deserializeMessage(message);
+        public void onFound(final Message message) {
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        deserializeMessage(message);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } catch (ClassNotFoundException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+
+        }
+
+        @Override
+        public void onLost(Message message) {
+            super.onLost(message);
         }
     };
 
-    public void deserializeMessage(Message message){
-        Serializer.deserialize();
+    public void deserializeMessage(Message message) throws IOException, ClassNotFoundException {
+        Serializer.deserialize(message.getContent());
     }
 }
