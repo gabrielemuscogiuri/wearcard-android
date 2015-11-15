@@ -398,7 +398,7 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
 
     @Override
     public void onMessageReceived(MessageEvent messageEvent) {
-        System.out.println("message recieved from wearable");
+        Toast.makeText( this, "Wear onMessageReceived", Toast.LENGTH_SHORT ).show();
         publish();
     }
 }
