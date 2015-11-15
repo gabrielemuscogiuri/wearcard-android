@@ -10,6 +10,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -20,14 +21,24 @@ import com.google.android.gms.nearby.Nearby;
 import com.google.android.gms.nearby.messages.Message;
 import com.google.android.gms.nearby.messages.MessageListener;
 import com.google.android.gms.nearby.messages.NearbyMessagesStatusCodes;
+import com.google.android.gms.wearable.MessageApi;
+import com.google.android.gms.wearable.MessageEvent;
+import com.google.android.gms.wearable.Wearable;
+import com.google.android.gms.wearable.WearableListenerService;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
+import org.json.JSONObject;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 
 import personalapp.momo.com.wearcard.Adapter.BusinessListAdapter;
 import personalapp.momo.com.wearcard.Models.BusinessCard;
 
-public class MainActivity extends Activity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+public class MainActivity extends Activity implements GoogleApiClient.ConnectionCallbacks, MessageApi.MessageListener, GoogleApiClient.OnConnectionFailedListener {
 
     private static final String TAG = MainActivity.class.getName();
     private Context mContext;
@@ -35,6 +46,9 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
     private GoogleApiClient mGoogleApiClient;
     private static final long CONNECTION_TIME_OUT = 10000L;
     private static final int REQUEST_RESOLVE_ERROR = 11011;
+
+    private static final Gson gson = new Gson();
+
 
     Button mPush;
 
@@ -50,6 +64,9 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
 
     BusinessListAdapter mBCardListAdapter;
     ArrayList<BusinessCard> mBCardList;
+    BusinessCard mBusinessCard;
+
+    ListView mListView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,20 +74,33 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
         setContentView(R.layout.activity_main);
 
         mPush = (Button) findViewById(R.id.button_publish);
+        mListView = (ListView) findViewById(R.id.cardbusiness_list);
+
+        mBusinessCard = new BusinessCard();
+
+        mBusinessCard.setNome("mohamed");
+        mBusinessCard.setCognome("eddaakouri");
+        mBusinessCard.setEmail("prova@cazzo.it");
+        mBusinessCard.setID("12");
+        mBusinessCard.setmNumero("347312044");
+        mBusinessCard.setmOccupazione("studente");
+        mBusinessCard.setThumbnail(null);
 
         mPush.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
-                publish("prova a publicare");
+                publish();
             }
         });
-        
+
         mBCardList = new ArrayList<>();
         //--------------------------------
         // Business Card list adapter
         //--------------------------------
         mBCardListAdapter = new BusinessListAdapter(this,mBCardList);
+
+        mListView.setAdapter(mBCardListAdapter);
 
 
     }
@@ -81,8 +111,10 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
-                .addApi(Nearby.MESSAGES_API)
+                .addApi(Nearby.MESSAGES_API).addApi(Wearable.API)
                 .build();
+
+        mGoogleApiClient.connect();
 
     }
 
@@ -93,8 +125,8 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
             // publishing when the fragment is inactive.
             unsubscribe();
             unpublish();
-
             mGoogleApiClient.disconnect();
+            Wearable.MessageApi.removeListener(mGoogleApiClient,this);
         }
         super.onStop();
     }
@@ -124,6 +156,7 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
     @Override
     public void onConnected(Bundle bundle) {
         System.out.println("onConnected --> Connected");
+        Wearable.MessageApi.addListener(mGoogleApiClient, this);
         subscribe();
     }
 
@@ -142,24 +175,23 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
     }
 
 
-    public void publish(String message) {
+    public void publish() {
 
         if(!mGoogleApiClient.isConnected()){
             if(!mGoogleApiClient.isConnecting())
                 mGoogleApiClient.connect();
         }
-        //byte[] businessCardByte = serializeCard(bcard);
-        byte[] businessCardByte = message.getBytes();
-        cardToSend = new Message(businessCardByte);
+
+        cardToSend = bCardTNearbyToMessage(mBusinessCard);
         if(mGoogleApiClient.isConnected()){
             System.out.println("google api is connected");
             Nearby.Messages.publish(mGoogleApiClient, cardToSend).setResultCallback(new ResultCallback<Status>() {
                 @Override
                 public void onResult(Status status) {
                     if (status.isSuccess()) {
-                        System.out.println("success");
+                        System.out.println("message sended");
                     } else {
-                        System.out.println("tipo di errore trovato ----------->" + status.toString());
+                        System.out.println("tipo di errore trovato -----------> " + status.toString());
                         handleUnsuccessfulResult(status);
                     }
                 }
@@ -249,7 +281,6 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
         } else {
             Nearby.Messages.subscribe(mGoogleApiClient, mMessageListener)
                     .setResultCallback(new ResultCallback<Status>() {
-
                         @Override
                         public void onResult(Status status) {
                             if (status.isSuccess()) {
@@ -301,15 +332,19 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
                 @Override
                 public void run() {
                     //try {
-                        decriptMessage(message);
-                    //} catch (IOException e) {
-                      //  e.printStackTrace();
-                   // } catch (ClassNotFoundException e) {
-                   //     e.printStackTrace();
-                   // }
+                    Toast.makeText(getApplicationContext(), "Messaggio Ricevuto " + message.getContent().toString(), Toast.LENGTH_LONG).show();
+                    System.out.println("Messaggio Ricevuto --> " + message.getContent());
+                    BusinessCard foundBusinessCard = fromNearbyMessageToBusinessCard(message);
+                    updateList(foundBusinessCard);
                 }
             });
 
+        }
+
+        public void updateList(BusinessCard bcard){
+            mBCardList.clear();
+            mBCardList.add(bcard);
+            mBCardListAdapter.notifyDataSetChanged();
         }
 
         @Override
@@ -319,8 +354,15 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
     };
 
     private void decriptMessage(Message message) {
-        String decriptedMex = message.toString();
-        System.out.println(decriptedMex);
+        String decriptedMex = null;
+        try {
+            decriptedMex = (String) Serializer.deserialize(message.getContent());
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        Toast.makeText(this,"messaggio decriptato ---> " + decriptedMex, Toast.LENGTH_LONG).show();
     }
 
     public void deserializeMessage(Message message) throws IOException, ClassNotFoundException {
@@ -329,4 +371,34 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
         mBCardListAdapter.notifyDataSetChanged();
     }
 
+    public static Message bCardTNearbyToMessage(BusinessCard bCard) {
+        return new Message(gson.toJson(bCard).toString().getBytes(Charset.forName("UTF-8")));
+    }
+
+    /**
+     * Creates a {@code DeviceMessage} object from the string used to construct the payload to a
+     * {@code Nearby} {@code Message}.
+     */
+    public static BusinessCard fromNearbyMessageToBusinessCard(Message message) {
+        String nearbyMessageString = new String(message.getContent()).trim();
+        String moreCoolMessage = new String(nearbyMessageString.getBytes(Charset.forName("UTF-8")));
+        JsonParser parser = new JsonParser();
+        JsonObject jobject = parser.parse(moreCoolMessage).getAsJsonObject();
+        BusinessCard actualCard = new BusinessCard();
+        actualCard.setNome(jobject.get("mNome").getAsString());
+        actualCard.setCognome(jobject.get("mCognome").getAsString());
+        actualCard.setID(jobject.get("ID").getAsString());
+        actualCard.setEmail(jobject.get("mEmail").getAsString());
+        actualCard.setmNumero(jobject.get("mNumero").getAsString());
+        actualCard.setmOccupazione(jobject.get("mOccupazione").getAsString());
+
+        System.out.println(actualCard.toString());
+        return actualCard;
+    }
+
+    @Override
+    public void onMessageReceived(MessageEvent messageEvent) {
+        System.out.println("message recieved from wearable");
+        publish();
+    }
 }

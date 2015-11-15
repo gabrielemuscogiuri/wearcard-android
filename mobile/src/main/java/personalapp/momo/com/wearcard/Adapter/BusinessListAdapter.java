@@ -18,7 +18,7 @@ import personalapp.momo.com.wearcard.R;
  */
 public class BusinessListAdapter extends ArrayAdapter<BusinessCard> {
     private Context mContext;
-    private ArrayList<BusinessCard> mCardList;
+    private ArrayList<BusinessCard> mCardList = new ArrayList<>();
 
     public BusinessListAdapter(Context context, ArrayList<BusinessCard> cardList){
         super(context,0,cardList);
@@ -29,20 +29,16 @@ public class BusinessListAdapter extends ArrayAdapter<BusinessCard> {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
 
-        View v = convertView;
-
-        if (v == null) {
-            LayoutInflater vi;
-            vi = LayoutInflater.from(getContext());
-            v = vi.inflate(R.layout.card_item, null);
-        }
-
         BusinessCard card = getItem(position);
 
+        if (convertView == null) {
+            convertView = LayoutInflater.from(mContext).inflate(R.layout.card_item, parent,false);
+        }
+
         if (card != null) {
-            TextView cardNome = (TextView) v.findViewById(R.id.card_tv_nome);
-            TextView cardCognome = (TextView) v.findViewById(R.id.card_tv_cognome);
-            ImageView thumbnail = (ImageView) v.findViewById(R.id.card_tv_thumbnail);
+            TextView cardNome = (TextView) convertView.findViewById(R.id.card_tv_nome);
+            TextView cardCognome = (TextView) convertView.findViewById(R.id.card_tv_cognome);
+            ImageView thumbnail = (ImageView) convertView.findViewById(R.id.card_tv_thumbnail);
 
             if (cardNome != null) {
                 cardNome.setText(card.getNome());
@@ -56,7 +52,7 @@ public class BusinessListAdapter extends ArrayAdapter<BusinessCard> {
                 thumbnail.setImageBitmap(card.getThumbnail());
             }
         }
-        return v;
+        return convertView;
     }
 
 

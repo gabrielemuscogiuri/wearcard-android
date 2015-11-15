@@ -12,6 +12,7 @@ import java.io.Serializable;
 * Questa classe rappresenta il business card
 * */
 public class BusinessCard implements Serializable {
+    private String ID;
     private String mNome;
     private String mCognome;
     private String mEmail;
@@ -21,7 +22,21 @@ public class BusinessCard implements Serializable {
 
 
     public BusinessCard(){
+        mNome = null;
+        mCognome = null;
+        mEmail = null;
+        mNumero = null;
+        mThumbnail = null;
+        mOccupazione = null;
 
+    }
+
+    public String getID() {
+        return ID;
+    }
+
+    public void setID(String ID) {
+        this.ID = ID;
     }
 
     public String getNome() {
@@ -70,5 +85,18 @@ public class BusinessCard implements Serializable {
 
     public void setmOccupazione(String mOccupazione) {
         this.mOccupazione = mOccupazione;
+    }
+
+    @Override
+    public String toString() {
+        return "BusinessCard{" +
+                "ID='" + ID + '\'' +
+                ", mNome='" + mNome + '\'' +
+                ", mCognome='" + mCognome + '\'' +
+                ", mEmail='" + mEmail + '\'' +
+                ", mNumero='" + mNumero + '\'' +
+                ", mThumbnail=" + mThumbnail +
+                ", mOccupazione='" + mOccupazione + '\'' +
+                '}';
     }
 }
