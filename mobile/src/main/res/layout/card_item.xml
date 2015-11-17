@@ -1,18 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="horizontal" android:layout_width="match_parent"
-    android:layout_height="100dp">
+    android:layout_height="100dp"
+    android:weightSum="1"
+    android:paddingTop="7dp">
+
+    <de.hdodenhof.circleimageview.CircleImageView
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/profile_image"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_gravity="center_vertical"
+        android:layout_margin="10dp" />
 
 
-    <ImageView
-        android:layout_width="100dp"
-        android:layout_height="fill_parent"
-        android:id="@+id/card_tv_thumbnail" />
 
     <LinearLayout
         android:orientation="vertical"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_width="160dp"
+        android:layout_height="match_parent"
+        android:layout_weight="0.68">
+
+
 
         <TextView
             android:layout_width="fill_parent"
@@ -21,17 +30,40 @@
             android:text="Nome"
             android:id="@+id/card_tv_cognome"
             android:textStyle="bold"
+            android:layout_marginLeft="5dp"
+            android:layout_marginTop="5dp"
             android:layout_gravity="center_horizontal"
-            android:layout_marginLeft="10dp" />
+            android:textSize="50px" />
 
         <TextView
-            android:layout_width="266dp"
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:text="Cognome"
             android:id="@+id/card_tv_nome"
             android:textStyle="bold"
             android:layout_gravity="center_horizontal"
-            android:layout_margin="10dp" />
+            android:layout_marginLeft="5dp"
+            android:layout_marginTop="5dp"
+            android:textSize="50px" />
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Occupazione"
+            android:id="@+id/tv_occupazione"
+            android:layout_marginLeft="5dp"
+            android:layout_marginTop="5dp"
+            android:layout_gravity="center_horizontal"
+            android:textSize="40px" />
     </LinearLayout>
+
+    <ImageButton
+        android:layout_height="20dp"
+        android:layout_width="20dp"
+        android:background="@color/transparent"
+        android:src="@drawable/ic_info_black_24dp"
+        android:layout_gravity="center_vertical"
+        />
 </LinearLayout>

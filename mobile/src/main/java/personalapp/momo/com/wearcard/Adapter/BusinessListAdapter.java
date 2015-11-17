@@ -10,6 +10,8 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
+import de.hdodenhof.circleimageview.CircleImageView;
+import personalapp.momo.com.wearcard.CustomImageView;
 import personalapp.momo.com.wearcard.Models.BusinessCard;
 import personalapp.momo.com.wearcard.R;
 
@@ -38,7 +40,8 @@ public class BusinessListAdapter extends ArrayAdapter<BusinessCard> {
         if (card != null) {
             TextView cardNome = (TextView) convertView.findViewById(R.id.card_tv_nome);
             TextView cardCognome = (TextView) convertView.findViewById(R.id.card_tv_cognome);
-            ImageView thumbnail = (ImageView) convertView.findViewById(R.id.card_tv_thumbnail);
+            TextView occupazione = (TextView) convertView.findViewById(R.id.tv_occupazione);
+            CircleImageView thumbnail = (CircleImageView) convertView.findViewById(R.id.profile_image);
 
             if (cardNome != null) {
                 cardNome.setText(card.getNome());
@@ -46,6 +49,10 @@ public class BusinessListAdapter extends ArrayAdapter<BusinessCard> {
 
             if (cardCognome != null) {
                 cardCognome.setText(card.getCognome());
+            }
+
+            if (occupazione != null) {
+                occupazione.setText(card.getmOccupazione());
             }
 
             if (thumbnail != null) {

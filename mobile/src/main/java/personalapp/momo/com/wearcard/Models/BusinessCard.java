@@ -99,4 +99,25 @@ public class BusinessCard implements Serializable {
                 ", mOccupazione='" + mOccupazione + '\'' +
                 '}';
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if( o instanceof BusinessCard){
+            return this.getID() == ((BusinessCard)o).getID();
+        }
+        else return super.equals(o);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = getID() != null ? getID().hashCode() : 0;
+        result = 31 * result + (mNome != null ? mNome.hashCode() : 0);
+        result = 31 * result + (mCognome != null ? mCognome.hashCode() : 0);
+        result = 31 * result + (mEmail != null ? mEmail.hashCode() : 0);
+        result = 31 * result + (mNumero != null ? mNumero.hashCode() : 0);
+        result = 31 * result + (mThumbnail != null ? mThumbnail.hashCode() : 0);
+        result = 31 * result + (getmOccupazione() != null ? getmOccupazione().hashCode() : 0);
+        return result;
+    }
 }

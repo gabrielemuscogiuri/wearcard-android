@@ -1,16 +1,30 @@
 package personalapp.momo.com.wearcard;
 
+import android.app.ActionBar;
 import android.app.Activity;
+import android.app.Application;
+import android.app.Notification;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.IntentSender;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.support.v4.app.NotificationManagerCompat;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.app.NotificationCompat;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -41,23 +55,30 @@ import personalapp.momo.com.wearcard.Models.BusinessCard;
 public class MainActivity extends Activity implements GoogleApiClient.ConnectionCallbacks, MessageApi.MessageListener, GoogleApiClient.OnConnectionFailedListener {
 
     private static final String TAG = MainActivity.class.getName();
+    private static final String CUSTOM_INTENT = "personalapp.momo.com.wearcard.CARD_ACCEPTED";
     private Context mContext;
     private Activity mActivity;
     private GoogleApiClient mGoogleApiClient;
     private static final long CONNECTION_TIME_OUT = 10000L;
     private static final int REQUEST_RESOLVE_ERROR = 11011;
+    private static final int NOTIFICATION_ID = 11011;
+    private RelativeLayout mPresentationLayout;
+
 
     private static final Gson gson = new Gson();
 
+    private final BroadcastReceiver myCardReceiver = new BroadcastReceiver() {
 
-    Button mPush;
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            updateList(mFoundBusinessCard);
+            cancelNotification();
+        }
+    };
 
-    private Message cardToSend;
 
-    private static int[] NETWORK_TYPES = {ConnectivityManager.TYPE_WIFI, ConnectivityManager.TYPE_BLUETOOTH, ConnectivityManager.TYPE_ETHERNET};
 
-    private boolean mIsHost;
-    private boolean mIsConnected;
+    private Message cardToSend = null;
 
     private boolean mRisolving;
 
@@ -65,44 +86,90 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
     BusinessListAdapter mBCardListAdapter;
     ArrayList<BusinessCard> mBCardList;
     BusinessCard mBusinessCard;
+    BusinessCard mFoundBusinessCard;
 
     ListView mListView;
+
+    boolean mListVisible = false;
+    boolean mPresentationVisible = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mPush = (Button) findViewById(R.id.button_publish);
+        ActionBar actionBar = this.getActionBar();
+        actionBar.hide();
+
         mListView = (ListView) findViewById(R.id.cardbusiness_list);
+
+        mPresentationLayout = (RelativeLayout) findViewById(R.id.empty_list_background);
 
         mBusinessCard = new BusinessCard();
 
-        mBusinessCard.setNome("mohamed");
-        mBusinessCard.setCognome("eddaakouri");
+        mBusinessCard.setNome("Mohamed");
+        mBusinessCard.setCognome("Eddaakouri");
         mBusinessCard.setEmail("prova@cazzo.it");
         mBusinessCard.setID("12");
         mBusinessCard.setmNumero("347312044");
-        mBusinessCard.setmOccupazione("studente");
+        mBusinessCard.setmOccupazione("Studente Unito-Informatica");
         mBusinessCard.setThumbnail(null);
 
-        mPush.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        BusinessCard bCard = new BusinessCard();
 
-                publish();
-            }
-        });
+        bCard.setNome("Michele");
+        bCard.setCognome("Vergnano");
+        bCard.setEmail("lhoinventatoio@internet.web");
+        bCard.setID("15");
+        bCard.setmNumero("347312044");
+        bCard.setmOccupazione("presentatore sagra salsiccia");
+        bCard.setThumbnail(BitmapFactory.decodeResource(getResources(), R.drawable.mv_profilo));
+
+        BusinessCard b2Card = new BusinessCard();
+
+        b2Card.setNome("Gabriele");
+        b2Card.setCognome("Muscogiuri");
+        b2Card.setEmail("un@internet.web");
+        b2Card.setID("35");
+        b2Card.setmNumero("347312044");
+        b2Card.setmOccupazione("developer");
+        b2Card.setThumbnail(BitmapFactory.decodeResource(getResources(), R.drawable.gm_profilo));
+
+        BusinessCard b3Card = new BusinessCard();
+
+        b3Card.setNome("Trevor");
+        b3Card.setCognome("Devalle");
+        b3Card.setEmail("un@internet.web");
+        b3Card.setID("35");
+        b3Card.setmNumero("347312044");
+        b3Card.setmOccupazione("Finlandia");
+        b3Card.setThumbnail(BitmapFactory.decodeResource(getResources(), R.drawable.td_profilo));
 
         mBCardList = new ArrayList<>();
         //--------------------------------
         // Business Card list adapter
         //--------------------------------
+
         mBCardListAdapter = new BusinessListAdapter(this,mBCardList);
 
         mListView.setAdapter(mBCardListAdapter);
 
+        /*
+        updateList(bCard);
+        updateList(b2Card);
+        updateList(b3Card);
+        */
+        IntentFilter niFilter = new IntentFilter(CUSTOM_INTENT);
+        registerReceiver(myCardReceiver, niFilter);
 
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(myCardReceiver);
+        cancelNotification();
     }
 
     public void onStart(){
@@ -119,14 +186,21 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+
+    }
+
+    @Override
     public void onStop() {
         if (mGoogleApiClient.isConnected()) {
             // Using Nearby is battery intensive. To preserve battery, stop subscribing or
             // publishing when the fragment is inactive.
-            unsubscribe();
             unpublish();
-            mGoogleApiClient.disconnect();
+            unsubscribe();
+
             Wearable.MessageApi.removeListener(mGoogleApiClient,this);
+            mGoogleApiClient.disconnect();
         }
         super.onStop();
     }
@@ -170,9 +244,6 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
 
     }
 
-    private byte[] serializeCard(BusinessCard bcard) throws IOException {
-        return Serializer.serialize(bcard);
-    }
 
 
     public void publish() {
@@ -223,26 +294,6 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
 
     }
 
-    public void connect(){
-        mGoogleApiClient.connect();
-    }
-
-    public void disconnect(){
-        if ( mGoogleApiClient != null && mGoogleApiClient.isConnected() ){
-            mGoogleApiClient.disconnect();
-        }
-    }
-
-    public boolean isConnectedToNetwork(){
-        ConnectivityManager connManager = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo info = connManager.getActiveNetworkInfo();
-        for(int networkType : NETWORK_TYPES){
-            if(info != null && info.isConnectedOrConnecting()){
-                return true;
-            }
-        }
-        return false;
-    }
 
     private void unpublish() {
         System.out.println(TAG + " trying to unpublish");
@@ -252,7 +303,7 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
             if (!mGoogleApiClient.isConnecting()) {
                 mGoogleApiClient.connect();
             }
-        } else {
+            else{
             Nearby.Messages.unpublish(mGoogleApiClient, cardToSend)
                     .setResultCallback(new ResultCallback<Status>() {
 
@@ -267,6 +318,7 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
                             }
                         }
                     });
+            }
         }
     }
 
@@ -306,9 +358,8 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
         if (!mGoogleApiClient.isConnected()) {
             if (!mGoogleApiClient.isConnecting()) {
                 mGoogleApiClient.connect();
-            }
-        } else {
-            Nearby.Messages.unsubscribe(mGoogleApiClient, mMessageListener)
+            }else {
+                Nearby.Messages.unsubscribe(mGoogleApiClient, mMessageListener)
                     .setResultCallback(new ResultCallback<Status>() {
 
                         @Override
@@ -324,6 +375,7 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
                     });
         }
     }
+    }
 
     MessageListener mMessageListener = new MessageListener() {
         @Override
@@ -331,20 +383,11 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    //try {
-                    Toast.makeText(getApplicationContext(), "Messaggio Ricevuto " + message.getContent().toString(), Toast.LENGTH_LONG).show();
                     System.out.println("Messaggio Ricevuto --> " + message.getContent());
-                    BusinessCard foundBusinessCard = fromNearbyMessageToBusinessCard(message);
-                    updateList(foundBusinessCard);
+                    mFoundBusinessCard = fromNearbyMessageToBusinessCard(message);
+                    onBusinessCardReceived();
                 }
             });
-
-        }
-
-        public void updateList(BusinessCard bcard){
-            mBCardList.clear();
-            mBCardList.add(bcard);
-            mBCardListAdapter.notifyDataSetChanged();
         }
 
         @Override
@@ -352,24 +395,29 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
             super.onLost(message);
         }
     };
+    public void updateFoundCard(BusinessCard card) {
 
-    private void decriptMessage(Message message) {
-        String decriptedMex = null;
-        try {
-            decriptedMex = (String) Serializer.deserialize(message.getContent());
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-        Toast.makeText(this,"messaggio decriptato ---> " + decriptedMex, Toast.LENGTH_LONG).show();
     }
 
-    public void deserializeMessage(Message message) throws IOException, ClassNotFoundException {
-        BusinessCard mFoundCard = (BusinessCard) Serializer.deserialize(message.getContent());
-        mBCardList.add(mFoundCard);
+    public void updateList(BusinessCard bcard){
+        mBCardList.add(bcard);
         mBCardListAdapter.notifyDataSetChanged();
+        if(mBCardList.size() > 0){
+            showList(true);
+        }
     }
+
+    private void showList(boolean show){
+        if(show){
+            mListView.setVisibility(View.VISIBLE);
+            mPresentationLayout.setVisibility(View.GONE);
+        }
+        else{
+            mListView.setVisibility(View.GONE);
+            mPresentationLayout.setVisibility(View.VISIBLE);
+        }
+    }
+
 
     public static Message bCardTNearbyToMessage(BusinessCard bCard) {
         return new Message(gson.toJson(bCard).toString().getBytes(Charset.forName("UTF-8")));
@@ -398,7 +446,68 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
 
     @Override
     public void onMessageReceived(MessageEvent messageEvent) {
-        Toast.makeText( this, "Wear onMessageReceived", Toast.LENGTH_SHORT ).show();
         publish();
     }
+
+    public void onBusinessCardReceived() {
+
+        if(mBCardList.contains(mFoundBusinessCard)){
+            return;
+        }
+
+        // Create an intent for the reply action
+        Intent acceptIntent = new Intent(CUSTOM_INTENT);
+        //acceptIntent.putExtra("action", "ok");
+
+        PendingIntent acceptPendingIntent =
+                PendingIntent.getBroadcast(this, 0, acceptIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT);
+
+
+        // Create the action
+        NotificationCompat.Action acceptAction =
+                new NotificationCompat.Action.Builder(R.drawable.ic_done_white_24dp,
+                        "Accetta Card", acceptPendingIntent)
+                        .build();
+
+
+        Bitmap bigPicture = BitmapFactory.decodeResource(getResources(), R.drawable.foto_profilo2);
+
+
+        NotificationCompat.BigPictureStyle bigPictureStyle = new NotificationCompat.BigPictureStyle()
+                .setSummaryText(mFoundBusinessCard.getNome() + " " + mFoundBusinessCard.getCognome())
+                .bigPicture(bigPicture);
+
+        NotificationCompat.BigTextStyle bigStyle = new NotificationCompat.BigTextStyle();
+        bigStyle.bigText("www.linkedin.it/santalfredos");
+
+        NotificationCompat.WearableExtender wearableExtender =
+                new NotificationCompat.WearableExtender()
+                        .setBackground(bigPicture)
+                        .addAction(acceptAction);
+
+
+        Notification standardNotification = new NotificationCompat.Builder(this)
+                .setContentTitle("Contatto: " + mFoundBusinessCard.getNome() + " " + mFoundBusinessCard.getCognome())
+                .setSmallIcon(R.drawable.ic_stat_logo_figo)
+                .setDefaults(Notification.DEFAULT_ALL)
+                .setPriority(Notification.PRIORITY_HIGH)
+                .setStyle(bigStyle)
+                .setStyle(bigPictureStyle)
+                .extend(wearableExtender)
+                .build();
+
+
+        mNotificationManager = NotificationManagerCompat.from(this);
+        mNotificationManager.notify(NOTIFICATION_ID, standardNotification);
+
+    }
+
+    NotificationManagerCompat mNotificationManager;
+
+
+    public void cancelNotification(){
+        mNotificationManager.cancel(NOTIFICATION_ID);
+    }
+
 }
